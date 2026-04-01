@@ -67,7 +67,7 @@ def get_trend(trend_df: pd.DataFrame) -> str:
     return "neutral"
 
 
-def get_signal(signal_df: pd.DataFrame, trend: str) -> str | None:
+def get_signal(signal_df: pd.DataFrame, trend: str):
     """Returns 'BUY', 'SELL', or None."""
     last = signal_df.iloc[-1]
 
