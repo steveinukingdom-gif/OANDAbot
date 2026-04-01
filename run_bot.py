@@ -2,6 +2,9 @@
 
 import time
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+
+ET = ZoneInfo("America/New_York")
 
 import oandapyV20
 
@@ -43,10 +46,26 @@ def main():
     print(f"  Daily loss limit: {DAILY_LOSS_LIMIT_PCT*100:.1f}% (£{starting_balance * DAILY_LOSS_LIMIT_PCT:,.2f})\n")
     send("🤖 <b>[OANDA BOT] Started</b>\nOANDA forex bot is now running.")
     trades_today = 0
+    summary_sent_today = False
 
     while True:
         try:
-            now = now_et()
+            now_utc = datetime.now(timezone.utc)
+            now_et_time = datetime.now(ET)
+            now = now_utc.strftime("%H:%M UTC")
+
+            # Send daily summary at 5 PM ET (NY session close)
+            if now_et_time.hour == 17 and now_et_time.minute == 0 and not summary_sent_today:
+                acc = get_account_summary(client)
+                alert_daily_summary(acc["balance"], acc["nav"], acc["unrealized_pl"], trades_today)
+                print(f"  📊 Daily summary sent | Trades: {trades_today}")
+                summary_sent_today = True
+                trades_today = 0
+
+            # Reset summary flag at midnight ET
+            if now_et_time.hour == 0 and now_et_time.minute == 0:
+                summary_sent_today = False
+
             print(f"\n  [{now}] Scanning {len(INSTRUMENTS)} instrument(s)...")
 
             # Daily loss circuit breaker
