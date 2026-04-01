@@ -15,6 +15,7 @@ from broker import (
     get_open_positions, is_flat, place_order, get_daily_pl,
 )
 from strategy import calculate_indicators, get_trend, get_signal, calculate_sl_tp
+from telegram_alerts import send, alert_buy, alert_sell, alert_daily_summary
 
 
 def now_et() -> str:
@@ -40,6 +41,8 @@ def main():
     starting_balance = summary["balance"]
     print(f"  Account balance : £{starting_balance:,.2f}")
     print(f"  Daily loss limit: {DAILY_LOSS_LIMIT_PCT*100:.1f}% (£{starting_balance * DAILY_LOSS_LIMIT_PCT:,.2f})\n")
+    send("🤖 <b>[OANDA BOT] Started</b>\nOANDA forex bot is now running.")
+    trades_today = 0
 
     while True:
         try:
@@ -97,6 +100,11 @@ def main():
                     rv = place_order(client, instrument, signal, sl, tp, UNITS)
                     arrow = "🟢 BUY " if signal == "BUY" else "🔴 SELL"
                     print(f"  {arrow} {instrument} @ {entry:.5f} | SL={sl:.5f} | TP={tp:.5f} | ATR={atr:.5f}")
+                    if signal == "BUY":
+                        alert_buy(instrument, UNITS, entry, sl, tp)
+                    else:
+                        alert_sell(instrument, UNITS, entry, sl, tp)
+                    trades_today += 1
 
                 except oandapyV20.exceptions.V20Error as e:
                     print(f"  {instrument}: API error — {e}")
