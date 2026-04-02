@@ -66,6 +66,9 @@ def main():
             if now_et_time.hour == 0 and now_et_time.minute == 0:
                 summary_sent_today = False
 
+            # Write heartbeat file for watchdog
+            with open('/tmp/heartbeat_oanda.json', 'w') as f:
+                f.write('{"status": "running"}')
             print(f"\n  [{now}] Scanning {len(INSTRUMENTS)} instrument(s)...")
 
             # Daily loss circuit breaker
